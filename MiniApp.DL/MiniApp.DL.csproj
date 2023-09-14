@@ -5,9 +5,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MongoDB.Driver" Version="2.21" />
+    <ProjectReference Include="..\MiniApp.Common\MiniApp.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MiniApp.Common\MiniApp.Common.csproj" />
+    <PackageReference Include="MongoDB.Driver" Version="2.21.0" />
   </ItemGroup>
 </Project>
