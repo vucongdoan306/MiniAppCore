@@ -1,21 +1,30 @@
-
-using System;
+using Microsoft.Extensions.Configuration;
+using MiniApp.DL.InterfaceConnect.MongoDb.Transaction;
 using MongoDB.Driver;
+using System.Net.WebSockets;
+
 namespace MiniApp.DL.Connect.MongoDb.Transaction;
-public class TransactionService 
+public class TransactionService : IDisposable, ITransactionService
 {
     private readonly IMongoClient _client;
     private readonly IClientSessionHandle _session;
+    protected string _connectionString = "";
+    protected string _databaseName = "";
 
-    public TransactionService(string connectionString)
+    public TransactionService(IConfiguration configuration)
     {
-        _client = new MongoClient(connectionString);
+        _connectionString = configuration.GetConnectionString("Mongo") ?? "";
+        _databaseName = configuration.GetSection("DatabaseName")["MiniApp"] ?? "";
+        var settings = MongoClientSettings.FromConnectionString(_connectionString);
+        settings.ServerApi = new ServerApi(ServerApiVersion.V1);
+        _client = new MongoClient(settings);
+
         _session = _client.StartSession();
     }
 
-    public IMongoDatabase GetDatabase(string databaseName)
+    public IMongoDatabase GetDatabase()
     {
-        return _client.GetDatabase(databaseName);
+        return _client.GetDatabase(_databaseName);
     }
 
     public void StartTransaction()
@@ -36,6 +45,24 @@ public class TransactionService
     public void Dispose()
     {
         _session.Dispose();
-        _client.Dispose();
+        //_client.Dispose();
+    }
+
+    public void ExcuteTransaction(Action<IMongoDatabase> action)
+    {
+        using (var session = _client.StartSession())
+        {
+            session.StartTransaction();
+            try
+            {
+                action(GetDatabase());
+                session.CommitTransaction();
+            }
+            catch (Exception)
+            {
+                session.AbortTransaction();
+                throw;
+            }
+        }
     }
 }
