@@ -77,11 +77,6 @@ public class MySqlTransactionService : IDisposable, ITransactionService
         throw new NotImplementedException();
     }
 
-    public void CommitTransaction()
-    {
-        throw new NotImplementedException();
-    }
-
     public void AbortTransaction()
     {
         throw new NotImplementedException();
