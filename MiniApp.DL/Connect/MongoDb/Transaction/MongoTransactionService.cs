@@ -4,14 +4,14 @@ using MongoDB.Driver;
 using System.Net.WebSockets;
 
 namespace MiniApp.DL.Connect.MongoDb.Transaction;
-public class TransactionService : IDisposable, ITransactionService
+public class MongoTransactionService : IDisposable, ITransactionService
 {
     private readonly IMongoClient _client;
     private readonly IClientSessionHandle _session;
     protected string _connectionString = "";
     protected string _databaseName = "";
 
-    public TransactionService(IConfiguration configuration)
+    public MongoTransactionService(IConfiguration configuration)
     {
         _connectionString = configuration.GetConnectionString("Mongo") ?? "";
         _databaseName = configuration.GetSection("DatabaseName")["MiniApp"] ?? "";

@@ -8,7 +8,7 @@ using MiniApp.DL.Repository;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<ITransactionService, MongoTransactionService>();
 builder.Services.AddScoped<IUsers, UserDAL>();
 builder.Services.AddScoped<IUserService, UserService>();
 
