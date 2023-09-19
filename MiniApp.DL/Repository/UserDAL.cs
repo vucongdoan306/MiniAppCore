@@ -1,4 +1,6 @@
-﻿using MiniApp.Common.Model;
+﻿using Microsoft.Extensions.Configuration;
+using MiniApp.Common.Model;
+using MiniApp.DL.Factory.Interface;
 using MiniApp.DL.Interface;
 using MiniApp.DL.InterfaceConnect.Transaction;
 using MongoDB.Bson;
@@ -15,8 +17,8 @@ namespace MiniApp.DL.Repository
     {
         private readonly ITransactionService _transactionService;
 
-        public UserDAL(ITransactionService transactionService){
-            _transactionService = transactionService;
+        public UserDAL(IConfiguration configuration,ITransactionFactory transactionFactory){
+            _transactionService = transactionFactory.Create(configuration.GetSection("DatabaseType")["DatabaseCommont"]??"");
         }
 
         public Users GetUserById(string id)
