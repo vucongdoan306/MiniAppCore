@@ -1,68 +1,43 @@
 using Microsoft.Extensions.Configuration;
-using MiniApp.DL.InterfaceConnect.MongoDb.Transaction;
+using MiniApp.DL.InterfaceConnect.Transaction;
 using MongoDB.Driver;
+using System.Data;
 using System.Net.WebSockets;
 
 namespace MiniApp.DL.Connect.MongoDb.Transaction;
-public class MongoTransactionService : IDisposable, ITransactionService
+public class MongoTransactionService : ITransactionService
 {
     private readonly IMongoClient _client;
     private readonly IClientSessionHandle _session;
-    protected string _connectionString = "";
-    protected string _databaseName = "";
 
-    public MongoTransactionService(IConfiguration configuration)
+    public MongoTransactionService(string connectionString)
     {
-        _connectionString = configuration.GetConnectionString("Mongo") ?? "";
-        _databaseName = configuration.GetSection("DatabaseName")["MiniApp"] ?? "";
-        var settings = MongoClientSettings.FromConnectionString(_connectionString);
-        settings.ServerApi = new ServerApi(ServerApiVersion.V1);
-        _client = new MongoClient(settings);
-
+        _client = new MongoClient(connectionString);
         _session = _client.StartSession();
     }
 
-    public IMongoDatabase GetDatabase()
+    public IDbConnection GetConnection()
     {
-        return _client.GetDatabase(_databaseName);
+        throw new NotSupportedException("MongoDB does not use ADO.NET connections.");
     }
 
-    public void StartTransaction()
+    public void BeginTransaction()
     {
         _session.StartTransaction();
     }
 
-    public void CommitTransaction()
+    public void Commit()
     {
         _session.CommitTransaction();
     }
 
-    public void AbortTransaction()
+    public void Rollback()
     {
         _session.AbortTransaction();
     }
 
     public void Dispose()
     {
-        _session.Dispose();
-        //_client.Dispose();
-    }
-
-    public void ExcuteTransaction(Action<IMongoDatabase> action)
-    {
-        using (var session = _client.StartSession())
-        {
-            session.StartTransaction();
-            try
-            {
-                action(GetDatabase());
-                session.CommitTransaction();
-            }
-            catch (Exception)
-            {
-                session.AbortTransaction();
-                throw;
-            }
-        }
+        _session?.Dispose();
     }
 }

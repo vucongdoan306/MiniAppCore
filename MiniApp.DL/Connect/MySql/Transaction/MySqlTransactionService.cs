@@ -1,89 +1,62 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
-using Dapper;
-using MiniApp.DL.InterfaceConnect.MongoDb.Transaction;
-using MongoDB.Driver;
+namespace MiniApp.DL.Connect.MySql.Transaction;
+
+using Microsoft.Extensions.Configuration;
+using MiniApp.DL.InterfaceConnect.Transaction;
 using MySqlConnector;
 
-public class MySqlTransactionService : IDisposable, ITransactionService
+public class MySqlTransactionService : ITransactionService
 {
-    private IDbConnection _connection;
-    private IDbTransaction _transaction;
+    private MySqlConnection _connection;
+    private MySqlTransaction? _transaction = null;
 
-    public MySqlTransactionService(string connectionString)
+    private string _connectionString = "";
+    
+    private bool _disposed = false;
+
+    public MySqlTransactionService(IConfiguration configuration)
     {
-        _connection = new MySqlConnection(connectionString);
-        _connection.Open();
+        _connectionString = configuration.GetConnectionString(configuration.GetSection("DatabaseType")["DatabaseCommon"]??"") ?? "";
+        _connection = new MySqlConnection(_connectionString);
+    }
+
+    public IDbConnection GetConnection()
+    {
+        if (_connection.State == ConnectionState.Closed)
+            _connection.Open();
+
+        return _connection;
+    }
+
+    public void BeginTransaction()
+    {
+        
+        if (_connection.State == ConnectionState.Closed)
+        {
+            _connection.Open();
+        }
+
         _transaction = _connection.BeginTransaction();
     }
 
-    public IDbConnection Connection => _connection;
-
-    public IDbTransaction Transaction => _transaction;
-
-    public void CommitTransaction()
+    public void Commit()
     {
-        try
-        {
-            _transaction.Commit();
-        }
-        catch
-        {
-            _transaction.Rollback();
-            throw;
-        }
-        finally
-        {
-            _transaction.Dispose();
-            _connection.Close();
-            _connection.Dispose();
-        }
+        _transaction?.Commit();
     }
 
     public void Rollback()
     {
-        _transaction.Rollback();
-        _transaction.Dispose();
-        _connection.Close();
-        _connection.Dispose();
+        _transaction?.Rollback();
     }
 
     public void Dispose()
     {
-        if (_transaction != null)
+        if (!_disposed)
         {
-            _transaction.Dispose();
+            _transaction?.Dispose();
+            _connection?.Dispose();
+            _disposed = true;
         }
-
-        if (_connection != null && _connection.State != ConnectionState.Closed)
-        {
-            _connection.Close();
-        }
-
-        if (_connection != null)
-        {
-            _connection.Dispose();
-        }
-    }
-
-    public IMongoDatabase GetDatabase()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void StartTransaction()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void AbortTransaction()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void ExcuteTransaction(Action<IMongoDatabase> action)
-    {
-        throw new NotImplementedException();
     }
 }

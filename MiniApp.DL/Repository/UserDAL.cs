@@ -1,6 +1,6 @@
 ﻿using MiniApp.Common.Model;
 using MiniApp.DL.Interface;
-using MiniApp.DL.InterfaceConnect.MongoDb.Transaction;
+using MiniApp.DL.InterfaceConnect.Transaction;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
@@ -13,25 +13,15 @@ namespace MiniApp.DL.Repository
 {
     public class UserDAL : IUsers
     {
-        private ITransactionService _transactionService;
+        private readonly ITransactionService _transactionService;
 
-        public UserDAL(ITransactionService _service)
-        {
-            _transactionService = _service;
+        public UserDAL(ITransactionService transactionService){
+            _transactionService = transactionService;
         }
 
         public Users GetUserById(string id)
         {
-            Users users = new Users();
-            _transactionService.ExcuteTransaction(database =>
-            {
-                var collection = database.GetCollection<Users>("User");
-                var filter = Builders<Users>.Filter.Eq("UserId", id);
-                users = collection.Find(filter).FirstOrDefault();
-            });
-
-
-            return users;
+            throw new NotImplementedException();
         }
     }
 }
